@@ -4,14 +4,15 @@ using UnityEngine;
 
 public class TakBoard : MonoBehaviour
 {
-  public Piece[,] pieces = new Piece[5, 5];
+  public const int BOARD_SIZE = 5;
+  public Stack[,] board = new Stack[BOARD_SIZE, BOARD_SIZE];
   public GameObject white_piece_prefab;
   public GameObject black_piece_prefab;
+  public GameObject stack_prefab;
   private Vector3 board_offset = new Vector3(-2.5f, 0f, -2.5f);
   private Vector3 piece_offset = new Vector3(0.5f, 0.15f, 0.5f);
-  private bool alternate = true;
-  private Piece selected_piece;
-  private Vector2Int startDrag;
+  private Stack selected_stack;
+  private Vector2Int selected_coords;
   private Vector2 endDrag;
   private Vector2Int mouse_coord;
 
@@ -20,22 +21,50 @@ public class TakBoard : MonoBehaviour
   }
 
   private void GenerateBoard() {
-    for(int j=0; j<5; j+=4) {
-      for(int i=0; i<5; i++) {
-        InstantiatePiece(i, j);
+    Debug.Assert(stack_prefab != null, "stack_prefab is null");
+    // Instantiate empty game objects for stacks
+    for(int i = 0; i < BOARD_SIZE; i++) {
+      for(int j = 0; j < BOARD_SIZE; j++) {
+        GameObject stack_obj = Instantiate(stack_prefab);
+        Stack stack = stack_obj.GetComponent<Stack>();
+        board[j, i] = stack;
+        stack_obj.transform.SetParent(this.transform);
+        stack.transform.position = GetWorldCoord(j, i);
       }
+    }
+    // THIS PART IS ONLY FOR TEST
+    // GAME START WITH AN EMPTY BOARD
+    // Put 5 white pieces to bottom row
+    for(int i=0; i<5; i++) {
+      InstantiatePiece(i, 0, "white");
+    }
+    // Put 5 black pieces to top row
+    for(int i = 0; i < 5; i++) {
+      InstantiatePiece(i, 4, "black");
     }
   }
 
-  private void InstantiatePiece(int x, int y) {
-    GameObject obj = Instantiate(alternate? white_piece_prefab:black_piece_prefab) as GameObject;
-    alternate = !alternate;
-    obj.transform.SetParent(this.transform);
-    pieces[x,y] = obj.GetComponent<Piece>();
-    MovePiece(pieces[x, y], x, y);
+  private void InstantiatePiece(int x, int y, string color) {
+    // Default is a white piece. Change prefab if it is black
+    GameObject prefab = white_piece_prefab;
+    if(color.Equals("black")) {
+      prefab = black_piece_prefab;
+    }
+    GameObject obj = Instantiate(prefab);
+    Piece created_piece = obj.GetComponent<Piece>();
+    if(created_piece == null) {
+      Debug.Log("Can't get Piece component of GameObject.");
+      return;
+    }
+    // AddTop() should handle parent setting and height of the piece;
+    created_piece.SetColor(color);
+    board[x, y].AddTop(created_piece);
+    // obj.transform.SetParent(this.transform);
+    //pieces[x,y] = obj.GetComponent<Piece>();
+    //MovePiece(pieces[x, y], x, y);
   }
 
-  private void MovePiece(Piece p, int x, int y) {
+  private void MovePiece(Stack p, int x, int y) {
     p.transform.position = GetWorldCoord(x, y);
   }
 
@@ -51,59 +80,90 @@ public class TakBoard : MonoBehaviour
     }
   }
 
-  private void SelectPiece(int x, int y) {
-    if(x < 0 || x >= pieces.Length || y < 0 || y >= pieces.Length) {
-      // Don't select any piece;
+  private void SelectStack(int x, int y) {
+    if(OutOfBounds(x)||OutOfBounds(y)) {
+      // Out of bounds - Don't select any stacks;
       return;
     }
-    Piece p = pieces[x, y];
-    if(p != null) {
-      selected_piece = p;
-      startDrag = mouse_coord;
-      p.transform.position += Vector3.up * 1f;
-      Debug.Log(selected_piece.name);
+    // This should never be null, since we populate the
+    // board at the beginning.
+    Stack s = board[x, y];
+    if(s != null && s.PieceCount()>0) {
+      // TODO: Improve selection logic. Currently when board[x,y] is selected
+      // we set the selected_stack to board[x,y] move it along the Y axis and
+      // create a new empty Stack to fill board[x,y]. We also destroy the
+      // selected_stack after we are done with it.
+      selected_stack = s;
+      // Move selected stack up along Y axis to show it is selected
+      selected_stack.transform.position = s.transform.position +                      // Original position
+                                          Vector3.up * 0.1f * (s.PieceCount() - 1) +  // Height of the pieces in stack
+                                          Vector3.up * 0.5f;                          // Selection offset
+      selected_coords = mouse_coord;
+      // Create a new empty Stack GameObject for board[x,y]
+      GameObject stack_obj = Instantiate(stack_prefab);
+      s = stack_obj.GetComponent<Stack>();
+      board[x, y] = s;
+      stack_obj.transform.SetParent(this.transform);
+      s.transform.position = GetWorldCoord(x, y);
+      Debug.Log("Selected stack at: ("+x+","+y+") Controlling player: "+selected_stack.controlling_player);
     }
   }
 
+  // OLD CODE
+  // Currently no support for drag and drop
   private void UpdatePieceDrag(Piece p) {
     if(p == null) {
       return;
     }
     RaycastHit hit;
-    if(Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 25.0f, LayerMask.GetMask("Board"))) {
+    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+    if(Physics.Raycast(ray, out hit, 25.0f, LayerMask.GetMask("Board"))) {
       p.transform.position = hit.point + Vector3.up * 2f;
     }
   }
 
+  // Check if a coordinate is out of bounds (i.e. not on the board)
   private bool OutOfBounds(int coord) {
-    if(coord < 0 || coord > pieces.Length) {
+    if(coord < 0 || coord > BOARD_SIZE) {
       return true;
     }
     return false;
   }
 
+  // Move the selected stack at (startX, startY) to (endX, endY) if possible
   private void TryMove(int startX, int startY, int endX, int endY) {
-    
-    startDrag = new Vector2Int(startX, startY);
-    endDrag = new Vector2Int(endX, endY);
-    selected_piece = pieces[startX, startY];
-    // Check empty;
-    if(selected_piece != null) {
-      if(!OutOfBounds(endX) &&
-         !OutOfBounds(endY) &&
-         (startX != endX || startY != endY) &&
-         pieces[endX, endY] == null) {
-        Debug.Log("Here");
-        pieces[startX, startY] = null;
-        MovePiece(selected_piece, endX, endY);
-        pieces[endX, endY] = selected_piece;
-        selected_piece = null;
-        return;
+    // Selected stack should never be null (Maybe changed
+    // when placing new stones?)
+    if(selected_stack != null) {
+      // TODO: Check valid direction also need to check if continuation
+      // of a move it should continue in same direction
+      // Currently: If target destination is on board move all pieces
+      // from selected piece to board.
+      if(!OutOfBounds(endX) && !OutOfBounds(endY)) {
+        Debug.Log("TryMove: (" + startX + "," + startY + ") -> (" + endX + "," + endY + ")");
+        // TODO: Set slide direction and only allow moves in that direction
+        // If selected stack is dropped into same place it is not counted as
+        // a move, don't forget to check it.
+        int num_pieces = selected_stack.PieceCount();
+        while(num_pieces > 0) {
+          board[endX, endY].AddTop(selected_stack.PopBottom());
+          num_pieces--;
+        }
+      } else {
+        // If out of bounds, drop the selected stack in its place for now
+        int num_pieces = selected_stack.PieceCount();
+        while(num_pieces > 0) {
+          board[startX, startY].AddTop(selected_stack.PopBottom());
+          num_pieces--;
+        }
       }
-      MovePiece(selected_piece, startX, startY);
-      startDrag = Vector2Int.zero;
-      endDrag = Vector2Int.zero;
-      selected_piece = null;
+      // If we placed all the pieces in selected_stack
+      // we are done. Destory and deselect it.
+      // (and we need to change turn)
+      if(selected_stack.PieceCount() == 0) {
+        Destroy(selected_stack);
+        selected_stack = null;
+      }
     }
   }
 
@@ -113,16 +173,16 @@ public class TakBoard : MonoBehaviour
 
   private void Update() {
     UpdateMouseCoord();
-    //if(selected_piece != null) {
-    //  UpdatePieceDrag(selected_piece);
-    //}
 
     if(Input.GetMouseButtonDown(0)) {
-      if(selected_piece != null) {
-        TryMove(startDrag.x, startDrag.y, mouse_coord.x, mouse_coord.y);
-        selected_piece = null;
+      if(selected_stack != null) {
+        // This should mean distributing a tower
+        // we should enter this codepath until
+        // selected_stack is empty, i.e. no more
+        // pieces left for player to place
+        TryMove(selected_coords.x, selected_coords.y, mouse_coord.x, mouse_coord.y);
       } else {
-        SelectPiece(mouse_coord.x, mouse_coord.y);
+        SelectStack(mouse_coord.x, mouse_coord.y);
       }
       
     }
