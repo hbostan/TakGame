@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 4580855152887923169}
   - component: {fileID: 4812502757773163479}
   - component: {fileID: 1294213876453459758}
-  - component: {fileID: 44805091153258017}
   - component: {fileID: -561270143920894012}
+  - component: {fileID: 44805091153258017}
+  - component: {fileID: 1991457744994915136}
   m_Layer: 8
   m_Name: Takboard
   m_TagString: Untagged
@@ -81,24 +82,6 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!114 &44805091153258017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 705146104289817586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 790a3d89e07294a4c98c14d19f97011b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  white_piece_prefab: {fileID: 7507872157120894915, guid: 8b38d0327b07c4e419b82d575ec3cda6,
-    type: 3}
-  black_piece_prefab: {fileID: 880670422634082601, guid: 6b2046be3d90afb46aee685545ae1016,
-    type: 3}
-  stack_prefab: {fileID: 8158974263319169334, guid: 6d7ad9d5692b50f4cba335ac09092ec9,
-    type: 3}
 --- !u!65 &-561270143920894012
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -112,3 +95,35 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 5.3678055, y: 0.250899, z: 5.367805}
   m_Center: {x: -0.000015854836, y: -0.0633737, z: 0.0000019073486}
+--- !u!114 &44805091153258017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 705146104289817586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 790a3d89e07294a4c98c14d19f97011b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  white_piece_prefab: {fileID: 9120707585980206576, guid: 8b38d0327b07c4e419b82d575ec3cda6,
+    type: 3}
+  black_piece_prefab: {fileID: 6594106267992827135, guid: 6b2046be3d90afb46aee685545ae1016,
+    type: 3}
+  stack_prefab: {fileID: 8158974263319169334, guid: 6d7ad9d5692b50f4cba335ac09092ec9,
+    type: 3}
+--- !u!114 &1991457744994915136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 705146104289817586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e70372f0caf5a88458d6e8db37040ae0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  highlight_prefab: {fileID: 775439747236076834, guid: 4891c461c953ffc40916603d769af737,
+    type: 3}

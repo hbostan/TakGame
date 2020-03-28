@@ -9,15 +9,18 @@ public class TakBoard : MonoBehaviour
   public GameObject white_piece_prefab;
   public GameObject black_piece_prefab;
   public GameObject stack_prefab;
+  public bool honor_turn = false;
   private Vector3 board_offset = new Vector3(-2.5f, 0f, -2.5f);
-  private Vector3 piece_offset = new Vector3(0.5f, 0.15f, 0.5f);
+  private Vector3 piece_offset = new Vector3(0.5f, 0.065f, 0.5f);
   private Stack selected_stack;
   private Vector2Int selected_coords;
   private Vector2 endDrag;
   private Vector2Int mouse_coord;
+  private Vector2Int slide_dir;
+  private string player_turn = "white";
 
-  private Vector3 GetWorldCoord(int x, int y) {
-    return (Vector3.right * x) + (Vector3.forward * y) + board_offset + piece_offset;
+  private Vector3 GetWorldCoord(Vector2Int coord) {
+    return (Vector3.right * coord.x) + (Vector3.forward * coord.y) + board_offset + piece_offset;
   }
 
   private void GenerateBoard() {
@@ -29,7 +32,8 @@ public class TakBoard : MonoBehaviour
         Stack stack = stack_obj.GetComponent<Stack>();
         board[j, i] = stack;
         stack_obj.transform.SetParent(this.transform);
-        stack.transform.position = GetWorldCoord(j, i);
+        stack.transform.position = GetWorldCoord(new Vector2Int(j, i));
+
       }
     }
     // THIS PART IS ONLY FOR TEST
@@ -64,8 +68,8 @@ public class TakBoard : MonoBehaviour
     //MovePiece(pieces[x, y], x, y);
   }
 
-  private void MovePiece(Stack p, int x, int y) {
-    p.transform.position = GetWorldCoord(x, y);
+  private void MovePiece(Stack p, Vector2Int coord) {
+    p.transform.position = GetWorldCoord(coord);
   }
 
   private void UpdateMouseCoord() {
@@ -80,15 +84,15 @@ public class TakBoard : MonoBehaviour
     }
   }
 
-  private void SelectStack(int x, int y) {
-    if(OutOfBounds(x)||OutOfBounds(y)) {
+  private void SelectStack(Vector2Int target) {
+    if(OutOfBounds(target)) {
       // Out of bounds - Don't select any stacks;
       return;
     }
     // This should never be null, since we populate the
     // board at the beginning.
-    Stack s = board[x, y];
-    if(s != null && s.PieceCount()>0) {
+    Stack s = board[target.x, target.y];
+    if(s != null && (!honor_turn || s.controlling_player.Equals(player_turn)) && s.PieceCount()>0) {
       // TODO: Improve selection logic. Currently when board[x,y] is selected
       // we set the selected_stack to board[x,y] move it along the Y axis and
       // create a new empty Stack to fill board[x,y]. We also destroy the
@@ -102,10 +106,11 @@ public class TakBoard : MonoBehaviour
       // Create a new empty Stack GameObject for board[x,y]
       GameObject stack_obj = Instantiate(stack_prefab);
       s = stack_obj.GetComponent<Stack>();
-      board[x, y] = s;
+      board[target.x, target.y] = s;
       stack_obj.transform.SetParent(this.transform);
-      s.transform.position = GetWorldCoord(x, y);
-      Debug.Log("Selected stack at: ("+x+","+y+") Controlling player: "+selected_stack.controlling_player);
+      s.transform.position = GetWorldCoord(target);
+      Debug.Log("Selected stack at: "+target+" Controlling player: "+selected_stack.controlling_player);
+      HighlightMoves();
     }
   }
 
@@ -123,15 +128,26 @@ public class TakBoard : MonoBehaviour
   }
 
   // Check if a coordinate is out of bounds (i.e. not on the board)
-  private bool OutOfBounds(int coord) {
-    if(coord < 0 || coord > BOARD_SIZE) {
+  private bool OutOfBounds(Vector2Int coord) {
+    if(coord.x < 0 || coord.x > BOARD_SIZE ||
+       coord.y < 0 || coord.y > BOARD_SIZE) {
       return true;
     }
     return false;
   }
 
+  private void DropStack(Stack s, Vector2Int coord) {
+    if(s != null && !OutOfBounds(coord)) {
+      int num_pieces = s.PieceCount();
+      while(num_pieces > 0) {
+        board[coord.x, coord.y].AddTop(s.PopBottom());
+        num_pieces--;
+      }
+    }
+  }
+
   // Move the selected stack at (startX, startY) to (endX, endY) if possible
-  private void TryMove(int startX, int startY, int endX, int endY) {
+  private void TryMove(Vector2Int start_coord, Vector2Int end_coord) {
     // Selected stack should never be null (Maybe changed
     // when placing new stones?)
     if(selected_stack != null) {
@@ -139,23 +155,35 @@ public class TakBoard : MonoBehaviour
       // of a move it should continue in same direction
       // Currently: If target destination is on board move all pieces
       // from selected piece to board.
-      if(!OutOfBounds(endX) && !OutOfBounds(endY)) {
-        Debug.Log("TryMove: (" + startX + "," + startY + ") -> (" + endX + "," + endY + ")");
+      int num_pieces = selected_stack.PieceCount();
+      Vector2Int cur_slide_dir = end_coord - start_coord;
+      if(OutOfBounds(end_coord)) {
+        DropStack(selected_stack, start_coord);
+      }
+      if(cur_slide_dir.sqrMagnitude <= 1) {
         // TODO: Set slide direction and only allow moves in that direction
         // If selected stack is dropped into same place it is not counted as
         // a move, don't forget to check it.
-        int num_pieces = selected_stack.PieceCount();
-        while(num_pieces > 0) {
-          board[endX, endY].AddTop(selected_stack.PopBottom());
+        if(slide_dir == Vector2Int.zero) {
+          slide_dir = cur_slide_dir;
+        }
+        if(end_coord == start_coord || slide_dir == cur_slide_dir) {
+          Debug.Log("TryMove: " + start_coord + " -> " + end_coord + " Slide Dir: " + slide_dir);
+          Stack s = board[end_coord.x, end_coord.y];
+          s.AddTop(selected_stack.PopBottom());
           num_pieces--;
+          selected_coords = end_coord;
+          selected_stack.transform.position = s.transform.position +                      // Original position
+                                              Vector3.up * 0.1f * (s.PieceCount() - 1) +  // Height of the pieces in stack
+                                              Vector3.up * 0.5f;                          // Selection offset
+          RemoveHightlights();
+          HighlightMoves();
+        } else {
+          DropStack(selected_stack, start_coord);
         }
       } else {
         // If out of bounds, drop the selected stack in its place for now
-        int num_pieces = selected_stack.PieceCount();
-        while(num_pieces > 0) {
-          board[startX, startY].AddTop(selected_stack.PopBottom());
-          num_pieces--;
-        }
+        DropStack(selected_stack, start_coord);
       }
       // If we placed all the pieces in selected_stack
       // we are done. Destory and deselect it.
@@ -163,12 +191,36 @@ public class TakBoard : MonoBehaviour
       if(selected_stack.PieceCount() == 0) {
         Destroy(selected_stack);
         selected_stack = null;
+        if(slide_dir != Vector2Int.zero) {
+          slide_dir = Vector2Int.zero;
+          player_turn = player_turn == "white" ? "black" : "white";
+        }
+        RemoveHightlights();
       }
     }
   }
 
   private void Start() {
     GenerateBoard();
+  }
+
+  private void HighlightMoves() {
+    Vector3 reduce_height = new Vector3(0f, 1f, 0f);
+    List<Vector3> possible_moves = new List<Vector3>();
+    possible_moves.Add(GetWorldCoord(selected_coords)+ reduce_height);
+    if(slide_dir == Vector2Int.zero) {
+      possible_moves.Add(GetWorldCoord(selected_coords + new Vector2Int(1, 0))+ reduce_height);
+      possible_moves.Add(GetWorldCoord(selected_coords + new Vector2Int(-1, 0))+ reduce_height);
+      possible_moves.Add(GetWorldCoord(selected_coords + new Vector2Int(0, 1))+ reduce_height);
+      possible_moves.Add(GetWorldCoord(selected_coords + new Vector2Int(0, -1))+ reduce_height);
+    } else {
+      possible_moves.Add(GetWorldCoord(selected_coords + slide_dir)+ reduce_height);
+    }
+    HighlightManager.Instance.HighlightMoves(possible_moves);
+  }
+
+  private void RemoveHightlights() {
+    HighlightManager.Instance.RemoveHighlights();
   }
 
   private void Update() {
@@ -180,9 +232,10 @@ public class TakBoard : MonoBehaviour
         // we should enter this codepath until
         // selected_stack is empty, i.e. no more
         // pieces left for player to place
-        TryMove(selected_coords.x, selected_coords.y, mouse_coord.x, mouse_coord.y);
+        TryMove(selected_coords, mouse_coord);
+        Debug.Log("Player Turn: " + player_turn);
       } else {
-        SelectStack(mouse_coord.x, mouse_coord.y);
+        SelectStack(mouse_coord);
       }
       
     }
