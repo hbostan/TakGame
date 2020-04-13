@@ -113,6 +113,10 @@ MonoBehaviour:
     type: 3}
   stack_prefab: {fileID: 8158974263319169334, guid: 6d7ad9d5692b50f4cba335ac09092ec9,
     type: 3}
+  selection_highlight_prefab: {fileID: 7947989985761233059, guid: c7edee641d054d6409eace5075e135cc,
+    type: 3}
+  selection_highlight: {fileID: 0}
+  honor_turn: 0
 --- !u!114 &1991457744994915136
 MonoBehaviour:
   m_ObjectHideFlags: 0

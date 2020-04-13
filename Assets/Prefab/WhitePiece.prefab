@@ -93,3 +93,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: white
+  isWall: 0
+  isCap: 0
