@@ -32,6 +32,10 @@ public class SelectionScript : MonoBehaviour
     }
   }
 
+  public void HighlightSpawn() {
+    mesh_renderer.material.color = Color.yellow;
+  }
+
   // Update is called once per frame
   void Update()
   {

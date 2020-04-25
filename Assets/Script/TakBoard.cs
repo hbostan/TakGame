@@ -17,10 +17,10 @@ public class TakBoard : MonoBehaviour {
   private string player_turn = "white";
   private Vector3 board_offset { get { return new Vector3(-2.5f, 0f, -2.5f); } }
   private Vector3 piece_offset = new Vector3(0.5f, 0.065f, 0.5f);
-  private Vector2Int whitepiece_spawn_coord = new Vector2Int(0, -1);
+  private Vector2Int whitepiece_spawn_coord = new Vector2Int(1, -1);
   private Vector2Int blackpiece_spawn_coord = new Vector2Int(4, 5);
   private Vector2Int whitecapstone_spawn_coord = new Vector2Int(2, -1);
-  private Vector2Int blackcapstone_spawn_coord = new Vector2Int(2, 5);
+  private Vector2Int blackcapstone_spawn_coord = new Vector2Int(3, 5);
   private Stack selected_stack;
   private Vector2Int selected_coords;
   private Vector2 endDrag;
@@ -157,6 +157,18 @@ public class TakBoard : MonoBehaviour {
   private bool OutOfBounds(Vector2Int coord) {
     if(coord.x < 0 || coord.x >= BOARD_SIZE ||
        coord.y < 0 || coord.y >= BOARD_SIZE) {
+      return true;
+    }
+    return false;
+  }
+
+  private bool OnSpawn(Vector2Int coord) {
+    if(player_turn == "white" && 
+        (coord == whitecapstone_spawn_coord || coord == whitepiece_spawn_coord)) {
+      return true;
+    }
+    if(player_turn == "black" && 
+        (coord == blackcapstone_spawn_coord || coord == blackpiece_spawn_coord)) {
       return true;
     }
     return false;
@@ -342,7 +354,12 @@ public class TakBoard : MonoBehaviour {
         selection_highlight.SetValid(true);
       }
       selection_highlight.transform.position = GetWorldCoord(mouse_coord);
-    }
+    } else {
+        if(OnSpawn(mouse_coord)) {
+          selection_highlight.HighlightSpawn();
+          selection_highlight.transform.position = GetWorldCoord(mouse_coord);
+        }
+      }
   }
 
   public void UpdatePossibleMoves() {
@@ -507,7 +524,7 @@ public class TakBoard : MonoBehaviour {
             client.Send("CFLIP|");
         }
       }
-      if(gstate != GameState.None && gstate != GameState.Finished && !OutOfBounds(mouse_coord)) {
+      if(gstate != GameState.None && gstate != GameState.Finished) {
         selection_highlight.SetActive(true);
       }
     }
