@@ -2,10 +2,10 @@
 Unity implementation of Tak Game
 ## ToDo
 ---     
-- [ ] Create pieces for both sides   
-- [ ] Check for valid moves   
-- [ ] Switch to stacks instead of individual pieces    
-- [ ] Check winning condition   
+- [x] Create pieces for both sides   
+- [x] Check for valid moves   
+- [x] Switch to stacks instead of individual pieces    
+- [x] Check winning condition   
 - [ ] Create UI   
-- [ ] Make multiplayer?   
+- [x] Make multiplayer?   
 - [ ] Create animations   
