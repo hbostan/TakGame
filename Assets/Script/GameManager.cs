@@ -9,28 +9,54 @@ public class GameManager : MonoBehaviour
     set; get;
   }
 
+  #region MenuFields
   public GameObject main_menu;
   public GameObject wait_menu;
+  public GameObject multi_player_menu;
   public GameObject connection_settings_menu;
   public GameObject host_settings_menu;
   public InputField username;
 
+  private bool game_on = false;
+  #endregion
+
+  #region serverClient
   public GameObject serverPrefab;
   public GameObject clientPrefab;
+  #endregion
+
   private void Start() {
     Instance = this;
     main_menu.SetActive(true);
+    multi_player_menu.SetActive(false);
     wait_menu.SetActive(false);
     host_settings_menu.SetActive(false);
     connection_settings_menu.SetActive(false);
-    
+
     DontDestroyOnLoad(gameObject);
+  }
+
+  private void Update() {
+    if (Input.GetKeyDown("escape")) {
+      if (game_on) {
+        game_on = false;
+        SceneManager.LoadScene("menu");
+      } else {
+        BackToMenuButton();
+      }
+    }
+  }
+
+  public void PlayOnlineButton() {
+    main_menu.SetActive(false);
+    multi_player_menu.SetActive(true);
   }
 
   public void MenuConnectButton() {
     main_menu.SetActive(false);
     connection_settings_menu.SetActive(true);
   }
+
   public void MenuHostButton() {
     main_menu.SetActive(false);
     host_settings_menu.SetActive(true);
@@ -87,10 +113,12 @@ public class GameManager : MonoBehaviour
     }
 
   }
+  
   public void BackToMenuButton() {
     connection_settings_menu.SetActive(false);
     host_settings_menu.SetActive(false);
     wait_menu.SetActive(false);
+    multi_player_menu.SetActive(false);
     main_menu.SetActive(true);
 
     Server s = FindObjectOfType<Server>();
@@ -103,7 +131,12 @@ public class GameManager : MonoBehaviour
     }
   }
 
+  public void QuitButton() {
+    Application.Quit();
+  }
+
   public void StartGame() {
-    SceneManager.LoadScene("Game");
+    game_on = true;
+    SceneManager.LoadScene("game");
   }
 }
