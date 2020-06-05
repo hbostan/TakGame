@@ -30,7 +30,7 @@ public class TakBoard : MonoBehaviour {
   private List<Vector2Int> possible_moves;
   private GameState gstate;
   private Client client;
-  private bool is_network_game;
+  private static bool is_network_game;
   private enum GameState {
     None = 0,
     PlaceFlat,
@@ -445,7 +445,12 @@ public class TakBoard : MonoBehaviour {
     ChangeGameState(GameState.None);
   }
 
+  public static bool IsNetworkGame() {
+    return is_network_game;
+  }
+
   private void Update() {
+    if (PauseMenu.gamePaused) return;
     UpdateMouseCoord();
     UpdateSelectionHighlight();
     if(player_turn.Equals(player_color)) {

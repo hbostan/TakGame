@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+
   public static GameManager Instance {
     set; get;
   }
@@ -34,17 +35,6 @@ public class GameManager : MonoBehaviour
     connection_settings_menu.SetActive(false);
 
     DontDestroyOnLoad(gameObject);
-  }
-
-  private void Update() {
-    if (Input.GetKeyDown("escape")) {
-      if (game_on) {
-        game_on = false;
-        SceneManager.LoadScene("menu");
-      } else {
-        BackToMenuButton();
-      }
-    }
   }
 
   public void PlayOnlineButton() {
