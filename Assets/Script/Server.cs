@@ -14,10 +14,11 @@ public class Server : MonoBehaviour
   private TcpListener server;
   private bool running;
 
-  public void Init() {
+  public void Init(int p=3131) {
     DontDestroyOnLoad(gameObject);
     clients = new List<ServerClient>();
     disconnect_clients = new List<ServerClient>();
+    port = p;
     try {
       server = new TcpListener(IPAddress.Any, port);
       server.Start();

@@ -33,12 +33,13 @@ public class CameraRotate : MonoBehaviour
   }
 
   void ZoomControl() {
-    if(Vector3.Distance(transform.position, Vector3.zero) <= min_distance && Input.GetAxis("Mouse ScrollWheel") > 0f) {
+    float move_amount = (Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime) * zoom_speed;
+    if(Vector3.Distance(transform.position, Vector3.zero) <= min_distance && move_amount > 0f) {
       return;
     }
-    if(Vector3.Distance(transform.position, Vector3.zero) >= max_distance && Input.GetAxis("Mouse ScrollWheel") < 0f) {
+    if(Vector3.Distance(transform.position, Vector3.zero) >= max_distance && move_amount < 0f) {
       return;
     }
-    transform.Translate(0f, 0f, (Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime) * zoom_speed, Space.Self);
+    transform.Translate(0f, 0f, move_amount, Space.Self);
   }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -54,20 +55,21 @@ public class GameManager : MonoBehaviour
 
   public void HostButton() {
     int host_port = 3131;
-    bool suc = int.TryParse(GameObject.Find("HostPortInputField").GetComponent<InputField>().text, out host_port);
+    bool suc = int.TryParse(GameObject.Find("HostPortInputField").GetComponent<TMP_InputField>().text, out host_port);
+    Debug.Log(suc + " " + host_port);
     if(!suc || host_port < 1024 || host_port > 6500) {
       host_port = 3131;
     }
     try {
       Server s = Instantiate(serverPrefab).GetComponent<Server>();
-      s.Init();
+      s.Init(host_port);
       Client c = Instantiate(clientPrefab).GetComponent<Client>();
       c.client_name = username.text;
       c.isHost = true;
       if(c.client_name == "") {
         c.client_name = "User#" + (new System.Random().Next()).ToString();
       }
-      c.Connect("127.0.0.1", 3131);
+      c.Connect("127.0.0.1", host_port);
     }
     catch(Exception e) {
       Debug.LogError("Host: " + e.Message);
@@ -79,12 +81,12 @@ public class GameManager : MonoBehaviour
 
   public void ConnectButton() {
     string host_addr = "";
-    host_addr = GameObject.Find("HostInputField").GetComponent<InputField>().text;
+    host_addr = GameObject.Find("HostInputField").GetComponent<TMP_InputField>().text;
     if(host_addr == "") {
       host_addr = "127.0.0.1";
     }
     int host_port = 3131;
-    bool suc = int.TryParse(GameObject.Find("PortInputField").GetComponent<InputField>().text, out host_port);
+    bool suc = int.TryParse(GameObject.Find("PortInputField").GetComponent<TMP_InputField>().text, out host_port);
     if(!suc || host_port < 1024 || host_port > 6500) {
       host_port = 3131;
     }
