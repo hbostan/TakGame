@@ -17,10 +17,11 @@ public class GameManager : MonoBehaviour
   public GameObject multi_player_menu;
   public GameObject connection_settings_menu;
   public GameObject host_settings_menu;
-  public InputField username;
+  public TMP_InputField username;
+  #endregion
 
   private bool game_on = false;
-  #endregion
+   
 
   #region serverClient
   public GameObject serverPrefab;
@@ -34,7 +35,6 @@ public class GameManager : MonoBehaviour
     wait_menu.SetActive(false);
     host_settings_menu.SetActive(false);
     connection_settings_menu.SetActive(false);
-
     DontDestroyOnLoad(gameObject);
   }
 
@@ -56,7 +56,6 @@ public class GameManager : MonoBehaviour
   public void HostButton() {
     int host_port = 3131;
     bool suc = int.TryParse(GameObject.Find("HostPortInputField").GetComponent<TMP_InputField>().text, out host_port);
-    Debug.Log(suc + " " + host_port);
     if(!suc || host_port < 1024 || host_port > 6500) {
       host_port = 3131;
     }
