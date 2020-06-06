@@ -38,6 +38,12 @@ public class GameManager : MonoBehaviour
     DontDestroyOnLoad(gameObject);
   }
 
+  private void Update() {
+    if (!game_on && Input.GetKeyDown(KeyCode.Escape)) {
+      BackToMenuButton();
+    }
+  }
+
   public void PlayOnlineButton() {
     main_menu.SetActive(false);
     multi_player_menu.SetActive(true);
